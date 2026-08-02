@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reserva tu Mototaxi — Jose Luis</title>
+<style>
+  :root{
+    --bg:#F7F3EA;
+    --paper:#FFFDF7;
+    --ink:#18171B;
+    --ink-soft:#5B5F63;
+    --line:#E4DDC9;
+    --accent:#F4C430;
+    --accent-ink:#3A2C00;
+    --rosa:#C2205C;
+    --rosa-dark:#8A1846;
+    --plata:#B9BBC0;
+    --confirm:#2F6E4F;
+    --radius:14px;
+    --mono: ui-monospace, "SF Mono", "Courier New", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    min-height:100vh;padding:24px 14px 60px;
+  }
+  .app{max-width:480px;margin:0 auto;}
+  header.top{
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+    padding-bottom:14px;border-bottom:2px solid var(--plata);
+  }
+  .badge{
+    width:60px;height:52px;border-radius:8px;background:var(--accent);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:800;letter-spacing:0.3px;text-align:center;line-height:1.1;
+    flex-shrink:0;border:3px solid var(--ink);box-shadow:0 2px 0 var(--ink);
+  }
+  .badge .tiny{font-size:6px;letter-spacing:0.6px;text-transform:uppercase;opacity:0.75;}
+  .badge .big{font-size:20px;letter-spacing:0.5px;}
+  header.top h1{font-size:19px;margin:0;letter-spacing:0.3px;text-transform:uppercase;font-weight:800;}
+  header.top p{margin:2px 0 0;color:var(--ink-soft);font-size:12.5px;}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:0.6px;margin:0 0 14px;color:var(--ink-soft);font-weight:800;}
+  label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:12px 0 5px;}
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=tel], input[type=datetime-local], select{
+    width:100%;padding:10px 11px;border:1.5px solid var(--line);border-radius:9px;
+    font-size:14.5px;background:#fff;color:var(--ink);font-family:var(--sans);
+  }
+  input:focus, select:focus, button:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+
+  .toggle-group{display:flex;gap:8px;margin-top:5px;}
+  .toggle-group button{
+    flex:1;padding:10px 6px;border-radius:9px;border:1.5px solid var(--line);
+    background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink-soft);
+  }
+  .toggle-group button.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+
+  .stepper{display:flex;align-items:center;gap:10px;margin-top:5px;}
+  .stepper button{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--plata);background:#fff;font-size:18px;font-weight:800;cursor:pointer;color:var(--ink);}
+  .stepper span{font-family:var(--mono);font-size:18px;font-weight:700;min-width:24px;text-align:center;color:var(--rosa-dark);}
+
+  .ticket{background:var(--paper);border:1.5px dashed var(--plata);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+  .ticket-head{background:linear-gradient(135deg, var(--rosa), var(--rosa-dark));color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;}
+  .ticket-head .t1{font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;}
+  .ticket-body{padding:16px;}
+  .ticket-line{display:flex;justify-content:space-between;font-size:13.5px;padding:6px 0;border-bottom:1px dotted var(--line);}
+  .ticket-line span:first-child{color:var(--ink-soft);}
+  .ticket-line span:last-child{font-weight:700;font-family:var(--mono);}
+  .ticket-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:2px solid var(--ink);}
+  .ticket-total .lbl{font-size:12px;text-transform:uppercase;font-weight:800;color:var(--ink-soft);}
+  .ticket-total .amt{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--rosa-dark);}
+
+  .btn-whatsapp{
+    width:100%;padding:14px;border:none;border-radius:10px;background:var(--confirm);color:#fff;
+    font-weight:800;font-size:14.5px;text-transform:uppercase;letter-spacing:0.4px;cursor:pointer;
+  }
+  .btn-whatsapp:disabled{opacity:0.4;cursor:not-allowed;}
+  small.hint{display:block;color:var(--ink-soft);font-size:11.5px;margin-top:8px;line-height:1.4;text-align:center;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// Configura aquí tu número y rutas — este archivo NO depende de almacenamiento en la nube,
+// funciona en cualquier navegador y en cualquier hosting.
+const TELEFONO_CONDUCTOR = '51952328431';
+const CAPACIDAD_MAX = 3;
+const RUTAS = [
+  {id:'r1', nombre:'Sausal Alto Perú — Mercado', base:1.50, extraPasajero:0.50, equipaje:0.50},
+  {id:'r2', nombre:'Sausal Alto Perú — Sect. Tráfico', base:2.00, extraPasajero:0.50, equipaje:0.50},
+  {id:'r3', nombre:'Sausal Pueblo — Sect. Vivero', base:2.00, extraPasajero:0.50, equipaje:0.50},
+  {id:'r4', nombre:'Sausal Pueblo — Sect. Tiro Blanco', base:2.00, extraPasajero:0.50, equipaje:0.50},
+  {id:'r5', nombre:'Sausal Pueblo — Sect. 15', base:3.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r6', nombre:'Sausal Pueblo — Cas. Quemazón', base:4.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r7', nombre:'Sausal Pueblo — Cas. Pte Tabla', base:6.00, extraPasajero:0.50, equipaje:1.00},
+  {id:'r8', nombre:'Sausal Pueblo — Cas. Piedra Molino', base:8.00, extraPasajero:1.00, equipaje:1.50},
+  {id:'r9', nombre:'Sausal Pueblo — Cas. La Mónica', base:6.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r10', nombre:'Sausal Pueblo — Sector Microalgas', base:3.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r11', nombre:'Sausal Pueblo — Sector Enrocado M.A.', base:6.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r12', nombre:'Sausal Pueblo — Sector Voladero', base:4.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r13', nombre:'Sausal Pueblo — Sector Enrocado Vol.', base:5.00, extraPasajero:1.00, equipaje:1.00},
+];
+
+let form = { nombre:'', rutaId: RUTAS[0].id, pasajeros:1, equipaje:false, fecha:'' };
+
+function nowLocal(){
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+function calcularTarifa(ruta, pasajeros, equipaje){
+  if(!ruta) return 0;
+  let total = ruta.base;
+  if(pasajeros > 1) total += (pasajeros - 1) * ruta.extraPasajero;
+  if(equipaje) total += ruta.equipaje;
+  return total;
+}
+function fmt(n){ return 'S/ ' + n.toFixed(2); }
+function escapeHtml(s){ const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML; }
+
+function render(){
+  const ruta = RUTAS.find(r=>r.id===form.rutaId);
+  const total = calcularTarifa(ruta, form.pasajeros, form.equipaje);
+
+  document.getElementById('app').innerHTML = `
+    <header class="top">
+      <div class="badge"><span class="tiny">Servicio</span><span class="big">JL</span></div>
+      <div>
+        <h1>Jose Luis Mototaxi</h1>
+        <p>Reserva tu servicio — Sausal y alrededores</p>
+      </div>
+    </header>
+
+    <div class="card">
+      <h2>Tus datos</h2>
+      <label for="f-nombre">Nombre completo</label>
+      <input id="f-nombre" type="text" placeholder="Ej. María Torres" value="${escapeHtml(form.nombre)}" oninput="form.nombre=this.value; render();">
+      <label for="f-fecha">Fecha y hora del servicio</label>
+      <input id="f-fecha" type="datetime-local" value="${form.fecha}" onchange="form.fecha=this.value">
+    </div>
+
+    <div class="card">
+      <h2>Detalles del viaje</h2>
+      <label for="f-ruta">Ruta</label>
+      <select id="f-ruta" onchange="form.rutaId=this.value; render();">
+        ${RUTAS.map(r=>`<option value="${r.id}" ${r.id===form.rutaId?'selected':''}>${escapeHtml(r.nombre)}</option>`).join('')}
+      </select>
+      <label>Número de pasajeros</label>
+      <div class="stepper">
+        <button onclick="form.pasajeros=Math.max(1,form.pasajeros-1); render();" ${form.pasajeros<=1?'disabled':''}>−</button>
+        <span>${form.pasajeros}</span>
+        <button onclick="form.pasajeros=Math.min(${CAPACIDAD_MAX},form.pasajeros+1); render();" ${form.pasajeros>=CAPACIDAD_MAX?'disabled':''}>+</button>
+      </div>
+      <label>Equipaje</label>
+      <div class="toggle-group">
+        <button class="${!form.equipaje?'sel':''}" onclick="form.equipaje=false; render();">Sin equipaje</button>
+        <button class="${form.equipaje?'sel':''}" onclick="form.equipaje=true; render();">Con equipaje (máx. 50 kg)</button>
+      </div>
+    </div>
+
+    <div class="ticket">
+      <div class="ticket-head"><span class="t1">Resumen de tu reserva</span></div>
+      <div class="ticket-body">
+        <div class="ticket-line"><span>Ruta</span><span>${escapeHtml(ruta.nombre)}</span></div>
+        <div class="ticket-line"><span>Pasajeros</span><span>${form.pasajeros}</span></div>
+        <div class="ticket-line"><span>Equipaje</span><span>${form.equipaje ? fmt(ruta.equipaje) : 'No'}</span></div>
+        <div class="ticket-total"><span class="lbl">Total a pagar</span><span class="amt">${fmt(total)}</span></div>
+      </div>
+    </div>
+
+    <button class="btn-whatsapp" ${!form.nombre ? 'disabled' : ''} onclick="enviarReserva()">Reservar por WhatsApp</button>
+    <small class="hint">Al tocar el botón se abre WhatsApp con tu reserva lista para enviar al conductor.</small>
+  `;
+}
+
+function enviarReserva(){
+  const ruta = RUTAS.find(r=>r.id===form.rutaId);
+  const total = calcularTarifa(ruta, form.pasajeros, form.equipaje);
+  const fechaTxt = form.fecha ? new Date(form.fecha).toLocaleString('es-PE') : 'Lo antes posible';
+  const msg = `Hola, quiero reservar un mototaxi:%0A` +
+    `🙋 Nombre: ${encodeURIComponent(form.nombre)}%0A` +
+    `📍 Ruta: ${encodeURIComponent(ruta.nombre)}%0A` +
+    `👥 Pasajeros: ${form.pasajeros}%0A` +
+    `🧳 Equipaje: ${form.equipaje ? 'Sí' : 'No'}%0A` +
+    `📅 Fecha y hora: ${encodeURIComponent(fechaTxt)}%0A` +
+    `💰 Total estimado: ${encodeURIComponent(fmt(total))}`;
+  window.open(`https://wa.me/${TELEFONO_CONDUCTOR}?text=${msg}`, '_blank');
+}
+
+form.fecha = nowLocal();
+render();
+</script>
+</body>
+</html>
