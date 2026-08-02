@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jose Luis Mototaxi — Reservas</title>
+<style>
+  :root{
+    --bg:#F7F3EA;
+    --paper:#FFFDF7;
+    --ink:#18171B;
+    --ink-soft:#5B5F63;
+    --line:#E4DDC9;
+    --accent:#F4C430;
+    --accent-ink:#3A2C00;
+    --rosa:#C2205C;
+    --rosa-dark:#8A1846;
+    --plata:#B9BBC0;
+    --confirm:#2F6E4F;
+    --confirm-bg:#E7F2EC;
+    --alert:#C1440E;
+    --alert-bg:#FBEAE2;
+    --radius:14px;
+    --mono: ui-monospace, "SF Mono", "Courier New", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 14px),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:24px 14px 60px;
+  }
+  .app{max-width:480px;margin:0 auto;}
+
+  /* HEADER */
+  header.top{
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:18px;padding-bottom:14px;
+    border-bottom:2px solid var(--plata);
+  }
+  .badge{
+    width:60px;height:52px;border-radius:8px;
+    background:var(--accent);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:800;
+    letter-spacing:0.3px;text-align:center;line-height:1.1;
+    flex-shrink:0;border:3px solid var(--ink);
+    box-shadow:0 2px 0 var(--ink);
+  }
+  .badge .tiny{font-size:6px;letter-spacing:0.6px;text-transform:uppercase;opacity:0.75;}
+  .badge .big{font-size:20px;letter-spacing:0.5px;}
+  header.top h1{
+    font-size:19px;margin:0;letter-spacing:0.3px;
+    text-transform:uppercase;font-weight:800;
+  }
+  header.top p{margin:2px 0 0;color:var(--ink-soft);font-size:12.5px;}
+
+  /* TABS */
+  nav.tabs{
+    display:flex;gap:6px;margin-bottom:18px;
+    background:var(--paper);padding:5px;border-radius:12px;
+    border:1px solid var(--line);
+  }
+  nav.tabs button{
+    flex:1;border:none;background:transparent;
+    padding:9px 4px;border-radius:8px;font-size:12.5px;
+    font-weight:700;color:var(--ink-soft);cursor:pointer;
+    text-transform:uppercase;letter-spacing:0.3px;
+    transition:all .15s ease;
+  }
+  nav.tabs button.active{background:var(--rosa);color:#fff;}
+
+  .card{
+    background:var(--paper);border:1px solid var(--line);
+    border-radius:var(--radius);padding:18px;margin-bottom:14px;
+  }
+  .card h2{
+    font-size:13px;text-transform:uppercase;letter-spacing:0.6px;
+    margin:0 0 14px;color:var(--ink-soft);font-weight:800;
+  }
+
+  label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:12px 0 5px;}
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=tel], input[type=number], input[type=datetime-local], select{
+    width:100%;padding:10px 11px;border:1.5px solid var(--line);
+    border-radius:9px;font-size:14.5px;background:#fff;color:var(--ink);
+    font-family:var(--sans);
+  }
+  input:focus, select:focus, button:focus-visible{
+    outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);
+  }
+
+  .row2{display:flex;gap:10px;}
+  .row2 > div{flex:1;}
+
+  .toggle-group{display:flex;gap:8px;margin-top:5px;}
+  .toggle-group button{
+    flex:1;padding:10px 6px;border-radius:9px;border:1.5px solid var(--line);
+    background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink-soft);
+  }
+  .toggle-group button.sel{
+    background:var(--accent);border-color:var(--accent);color:var(--accent-ink);
+  }
+
+  .stepper{display:flex;align-items:center;gap:10px;margin-top:5px;}
+  .stepper button{
+    width:38px;height:38px;border-radius:9px;border:1.5px solid var(--plata);
+    background:#fff;font-size:18px;font-weight:800;cursor:pointer;color:var(--ink);
+  }
+  .stepper span{font-family:var(--mono);font-size:18px;font-weight:700;min-width:24px;text-align:center;color:var(--rosa-dark);}
+
+  .btn-primary{
+    width:100%;padding:13px;border:none;border-radius:10px;
+    background:var(--rosa);color:#fff;font-weight:800;font-size:14.5px;
+    text-transform:uppercase;letter-spacing:0.4px;cursor:pointer;margin-top:16px;
+  }
+  .btn-primary:disabled{opacity:0.45;cursor:not-allowed;}
+  .btn-secondary{
+    width:100%;padding:11px;border:1.5px solid var(--rosa);border-radius:10px;
+    background:transparent;color:var(--rosa);font-weight:700;font-size:13.5px;
+    cursor:pointer;margin-top:8px;
+  }
+  .btn-whatsapp{
+    width:100%;padding:12px;border:none;border-radius:10px;
+    background:var(--confirm);color:#fff;font-weight:800;font-size:14px;
+    cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+
+  /* TICKET */
+  .ticket{
+    background:var(--paper);border:1.5px dashed var(--plata);
+    border-radius:var(--radius);padding:0;overflow:hidden;margin-bottom:14px;
+    position:relative;
+  }
+  .ticket-head{
+    background:linear-gradient(135deg, var(--rosa), var(--rosa-dark));color:#fff;padding:12px 16px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .ticket-head .t1{font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;}
+  .ticket-head .t2{font-family:var(--mono);font-size:11px;opacity:0.85;}
+  .ticket-body{padding:16px;}
+  .ticket-line{
+    display:flex;justify-content:space-between;font-size:13.5px;
+    padding:6px 0;border-bottom:1px dotted var(--line);
+  }
+  .ticket-line span:first-child{color:var(--ink-soft);}
+  .ticket-line span:last-child{font-weight:700;font-family:var(--mono);}
+  .ticket-total{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-top:12px;padding-top:12px;border-top:2px solid var(--ink);
+  }
+  .ticket-total .lbl{font-size:12px;text-transform:uppercase;font-weight:800;color:var(--ink-soft);}
+  .ticket-total .amt{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--rosa-dark);}
+  .perf{
+    position:absolute;width:16px;height:16px;background:var(--bg);border-radius:50%;
+    top:50%;transform:translateY(-50%);
+  }
+  .perf.left{left:-8px;} .perf.right{right:-8px;}
+
+  .empty{
+    text-align:center;padding:34px 16px;color:var(--ink-soft);font-size:13.5px;
+  }
+
+  /* HISTORIAL */
+  .res-item{
+    background:var(--paper);border:1px solid var(--line);border-radius:11px;
+    padding:12px 14px;margin-bottom:9px;
+  }
+  .res-item .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .res-item .nombre{font-weight:800;font-size:14px;}
+  .res-item .ruta{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .res-item .monto{font-family:var(--mono);font-weight:800;font-size:15px;white-space:nowrap;color:var(--rosa-dark);}
+  .res-item .meta{font-size:11px;color:var(--ink-soft);margin-top:6px;font-family:var(--mono);}
+  .status{
+    display:inline-block;font-size:10.5px;font-weight:800;text-transform:uppercase;
+    padding:3px 8px;border-radius:20px;letter-spacing:0.3px;margin-top:8px;cursor:pointer;border:none;
+  }
+  .status.pendiente{background:var(--accent);color:var(--accent-ink);}
+  .status.confirmado{background:var(--confirm-bg);color:var(--confirm);}
+  .status.completado{background:#E5E5E5;color:#666;}
+  .del-btn{
+    background:transparent;border:none;color:var(--alert);font-size:11px;font-weight:700;
+    cursor:pointer;margin-top:6px;padding:0;
+  }
+
+  /* RUTAS ADMIN */
+  .ruta-row{
+    border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;background:var(--paper);
+  }
+  .ruta-row .ruta-nombre{font-weight:800;font-size:14px;margin-bottom:8px;}
+  .ruta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+  .ruta-grid label{margin:0 0 4px;font-size:10.5px;}
+  .ruta-grid input{padding:7px 8px;font-size:13px;}
+  .ruta-actions{display:flex;justify-content:flex-end;}
+  .config-box{margin-top:6px;}
+  small.hint{display:block;color:var(--ink-soft);font-size:11.5px;margin-top:6px;line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const STORE = {
+  async get(key, def){
+    try{
+      const r = await window.storage.get(key, false);
+      return r ? JSON.parse(r.value) : def;
+    }catch(e){ return def; }
+  },
+  async set(key, value){
+    try{ await window.storage.set(key, JSON.stringify(value), false); }catch(e){ console.error(e); }
+  }
+};
+
+const DEFAULT_RUTAS = [
+  {id:'r1', nombre:'Sausal Alto Perú — Mercado', base:1.50, extraPasajero:0.50, equipaje:0.50},
+  {id:'r2', nombre:'Sausal Alto Perú — Sect. Tráfico', base:2.00, extraPasajero:0.50, equipaje:0.50},
+  {id:'r3', nombre:'Sausal Pueblo — Sect. Vivero', base:2.00, extraPasajero:0.50, equipaje:0.50},
+  {id:'r4', nombre:'Sausal Pueblo — Sect. Tiro Blanco', base:2.00, extraPasajero:0.50, equipaje:0.50},
+  {id:'r5', nombre:'Sausal Pueblo — Sect. 15', base:3.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r6', nombre:'Sausal Pueblo — Cas. Quemazón', base:4.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r7', nombre:'Sausal Pueblo — Cas. Pte Tabla', base:6.00, extraPasajero:0.50, equipaje:1.00},
+  {id:'r8', nombre:'Sausal Pueblo — Cas. Piedra Molino', base:8.00, extraPasajero:1.00, equipaje:1.50},
+  {id:'r9', nombre:'Sausal Pueblo — Cas. La Mónica', base:6.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r10', nombre:'Sausal Pueblo — Sector Microalgas', base:3.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r11', nombre:'Sausal Pueblo — Sector Enrocado M.A.', base:6.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r12', nombre:'Sausal Pueblo — Sector Voladero', base:4.00, extraPasajero:1.00, equipaje:1.00},
+  {id:'r13', nombre:'Sausal Pueblo — Sector Enrocado Vol.', base:5.00, extraPasajero:1.00, equipaje:1.00},
+];
+const DEFAULT_CONFIG = { telefono:'51952328431', capacidadMax:3 };
+const STORAGE_PREFIX = 'v2_';
+
+let rutas = [];
+let reservas = [];
+let config = {...DEFAULT_CONFIG};
+let tab = 'reservar';
+let form = { nombre:'', telefono:'', rutaId:'', pasajeros:1, equipaje:false, fecha:'' };
+
+function nowLocal(){
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+
+function calcularTarifa(ruta, pasajeros, equipaje){
+  if(!ruta) return 0;
+  let total = ruta.base;
+  if(pasajeros > 1) total += (pasajeros - 1) * ruta.extraPasajero;
+  if(equipaje) total += ruta.equipaje;
+  return total;
+}
+
+function fmt(n){ return 'S/ ' + n.toFixed(2); }
+
+function uid(){ return 'x' + Math.random().toString(36).slice(2,9); }
+
+async function init(){
+  rutas = await STORE.get(STORAGE_PREFIX+'rutas', DEFAULT_RUTAS);
+  reservas = await STORE.get(STORAGE_PREFIX+'reservas', []);
+  config = await STORE.get(STORAGE_PREFIX+'config', DEFAULT_CONFIG);
+  if(!form.rutaId && rutas.length) form.rutaId = rutas[0].id;
+  form.fecha = nowLocal();
+  render();
+}
+
+function switchTab(t){ tab = t; render(); }
+
+function escapeHtml(s){
+  const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <header class="top">
+      <div class="badge"><span class="tiny">Servicio</span><span class="big">JL</span></div>
+      <div>
+        <h1>Mototaxi Reservas</h1>
+        <p>Sausal y alrededores</p>
+      </div>
+    </header>
+    <nav class="tabs">
+      <button class="${tab==='reservar'?'active':''}" onclick="switchTab('reservar')">Reservar</button>
+      <button class="${tab==='historial'?'active':''}" onclick="switchTab('historial')">Historial</button>
+      <button class="${tab==='rutas'?'active':''}" onclick="switchTab('rutas')">Rutas y tarifas</button>
+    </nav>
+    <div id="content"></div>
+  `;
+  const content = document.getElementById('content');
+  if(tab==='reservar') content.innerHTML = renderReservar();
+  if(tab==='historial') content.innerHTML = renderHistorial();
+  if(tab==='rutas') content.innerHTML = renderRutas();
+}
+
+function renderReservar(){
+  const ruta = rutas.find(r=>r.id===form.rutaId);
+  const total = calcularTarifa(ruta, form.pasajeros, form.equipaje);
+  const capMax = config.capacidadMax || 4;
+
+  return `
+    <div class="card">
+      <h2>Datos del pasajero</h2>
+      <label for="f-nombre">Nombre completo</label>
+      <input id="f-nombre" type="text" placeholder="Ej. María Torres" value="${escapeHtml(form.nombre)}" oninput="form.nombre=this.value">
+
+      <label for="f-telefono">Teléfono (WhatsApp)</label>
+      <input id="f-telefono" type="tel" placeholder="Ej. 987654321" value="${escapeHtml(form.telefono)}" oninput="form.telefono=this.value">
+
+      <label for="f-fecha">Fecha y hora del servicio</label>
+      <input id="f-fecha" type="datetime-local" value="${form.fecha}" onchange="form.fecha=this.value">
+    </div>
+
+    <div class="card">
+      <h2>Detalles del servicio</h2>
+      <label for="f-ruta">Ruta</label>
+      <select id="f-ruta" onchange="form.rutaId=this.value; render();">
+        ${rutas.length===0 ? '<option value="">— No hay rutas registradas —</option>' :
+          rutas.map(r=>`<option value="${r.id}" ${r.id===form.rutaId?'selected':''}>${escapeHtml(r.nombre)}</option>`).join('')}
+      </select>
+
+      <label>Número de pasajeros</label>
+      <div class="stepper">
+        <button onclick="cambiarPasajeros(-1)" ${form.pasajeros<=1?'disabled':''}>−</button>
+        <span>${form.pasajeros}</span>
+        <button onclick="cambiarPasajeros(1)" ${form.pasajeros>=capMax?'disabled':''}>+</button>
+      </div>
+
+      <label>Equipaje</label>
+      <div class="toggle-group">
+        <button class="${!form.equipaje?'sel':''}" onclick="form.equipaje=false; render();">Sin equipaje</button>
+        <button class="${form.equipaje?'sel':''}" onclick="form.equipaje=true; render();">Con equipaje (máx. 50 kg)</button>
+      </div>
+    </div>
+
+    ${ruta ? renderTicketPreview(ruta, total) : '<div class="card"><p class="empty">Agrega una ruta en "Rutas y tarifas" para poder calcular el pago.</p></div>'}
+
+    <button class="btn-primary" ${(!form.nombre || !ruta) ? 'disabled' : ''} onclick="confirmarReserva()">Registrar reserva</button>
+  `;
+}
+
+function renderTicketPreview(ruta, total){
+  return `
+    <div class="ticket">
+      <span class="perf left"></span><span class="perf right"></span>
+      <div class="ticket-head">
+        <span class="t1">Boleto de servicio</span>
+        <span class="t2">${new Date(form.fecha||Date.now()).toLocaleString('es-PE',{dateStyle:'short',timeStyle:'short'})}</span>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-line"><span>Ruta</span><span>${escapeHtml(ruta.nombre)}</span></div>
+        <div class="ticket-line"><span>Tarifa base</span><span>${fmt(ruta.base)}</span></div>
+        <div class="ticket-line"><span>Pasajeros</span><span>${form.pasajeros} ${form.pasajeros>1 ? `(+${fmt(ruta.extraPasajero)} c/u extra)`:''}</span></div>
+        <div class="ticket-line"><span>Equipaje (máx. 50 kg)</span><span>${form.equipaje ? fmt(ruta.equipaje) : 'No'}</span></div>
+        <div class="ticket-total">
+          <span class="lbl">Total a pagar</span>
+          <span class="amt">${fmt(total)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function cambiarPasajeros(delta){
+  const capMax = config.capacidadMax || 4;
+  form.pasajeros = Math.min(capMax, Math.max(1, form.pasajeros + delta));
+  render();
+}
+
+async function confirmarReserva(){
+  const ruta = rutas.find(r=>r.id===form.rutaId);
+  if(!ruta || !form.nombre) return;
+  const total = calcularTarifa(ruta, form.pasajeros, form.equipaje);
+  const nueva = {
+    id: uid(),
+    nombre: form.nombre,
+    telefono: form.telefono,
+    rutaNombre: ruta.nombre,
+    pasajeros: form.pasajeros,
+    equipaje: form.equipaje,
+    fecha: form.fecha,
+    total: total,
+    estado: 'pendiente',
+    creado: new Date().toISOString()
+  };
+  reservas.unshift(nueva);
+  await STORE.set(STORAGE_PREFIX+'reservas', reservas);
+  form = { nombre:'', telefono:'', rutaId: rutas[0]?.id||'', pasajeros:1, equipaje:false, fecha: nowLocal() };
+  tab = 'historial';
+  render();
+}
+
+function renderHistorial(){
+  if(reservas.length===0){
+    return `<div class="card"><p class="empty">Aún no hay reservas registradas.<br>Ve a la pestaña "Reservar" para crear la primera.</p></div>`;
+  }
+  return reservas.map(r=>`
+    <div class="res-item">
+      <div class="row">
+        <div>
+          <div class="nombre">${escapeHtml(r.nombre)}</div>
+          <div class="ruta">${escapeHtml(r.rutaNombre)}</div>
+        </div>
+        <div class="monto">${fmt(r.total)}</div>
+      </div>
+      <div class="meta">${r.pasajeros} pasajero${r.pasajeros>1?'s':''} · ${r.equipaje?'con equipaje':'sin equipaje'} · ${r.fecha ? new Date(r.fecha).toLocaleString('es-PE',{dateStyle:'short',timeStyle:'short'}) : ''}</div>
+      <button class="status ${r.estado}" onclick="cambiarEstado('${r.id}')">${r.estado}</button>
+      ${r.telefono ? `<button class="btn-whatsapp" style="margin-top:8px;padding:8px;font-size:12.5px;" onclick="enviarWhatsapp('${r.id}')">Enviar boleto por WhatsApp</button>` : ''}
+      <div><button class="del-btn" onclick="eliminarReserva('${r.id}')">Eliminar</button></div>
+    </div>
+  `).join('');
+}
+
+async function cambiarEstado(id){
+  const orden = ['pendiente','confirmado','completado'];
+  const r = reservas.find(x=>x.id===id);
+  if(!r) return;
+  r.estado = orden[(orden.indexOf(r.estado)+1) % orden.length];
+  await STORE.set(STORAGE_PREFIX+'reservas', reservas);
+  render();
+}
+
+async function eliminarReserva(id){
+  reservas = reservas.filter(x=>x.id!==id);
+  await STORE.set(STORAGE_PREFIX+'reservas', reservas);
+  render();
+}
+
+function enviarWhatsapp(id){
+  const r = reservas.find(x=>x.id===id);
+  if(!r) return;
+  const msg = `*Boleto de servicio — Jose Luis Mototaxi*%0A` +
+    `Pasajero: ${encodeURIComponent(r.nombre)}%0A` +
+    `Ruta: ${encodeURIComponent(r.rutaNombre)}%0A` +
+    `Pasajeros: ${r.pasajeros}%0A` +
+    `Equipaje: ${r.equipaje ? 'Sí' : 'No'}%0A` +
+    `Fecha: ${encodeURIComponent(r.fecha ? new Date(r.fecha).toLocaleString('es-PE') : '')}%0A` +
+    `Total a pagar: ${encodeURIComponent(fmt(r.total))}`;
+  const telefono = (r.telefono || '').replace(/\D/g,'');
+  const url = `https://wa.me/${telefono}?text=${msg}`;
+  window.open(url, '_blank');
+}
+
+function renderRutas(){
+  return `
+    <div class="card">
+      <h2>Configuración general</h2>
+      <label for="cfg-tel">Tu número de WhatsApp (conductor)</label>
+      <input id="cfg-tel" type="tel" placeholder="Ej. 51987654321" value="${escapeHtml(config.telefono)}" onchange="guardarConfig('telefono', this.value)">
+      <label for="cfg-cap">Capacidad máxima de pasajeros</label>
+      <input id="cfg-cap" type="number" min="1" max="10" value="${config.capacidadMax}" onchange="guardarConfig('capacidadMax', parseInt(this.value)||4)">
+      <small class="hint">Usa el formato con código de país (51) para que el botón de WhatsApp funcione bien.</small>
+    </div>
+
+    <div class="card">
+      <h2>Rutas y tarifas</h2>
+      <small class="hint" style="margin-bottom:12px;">Estos son datos de ejemplo — edítalos con tus rutas y precios reales de Sausal y alrededores.</small>
+      ${rutas.length===0 ? '<p class="empty">No hay rutas. Agrega la primera abajo.</p>' : rutas.map(r=>`
+        <div class="ruta-row">
+          <input class="ruta-nombre" style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:7px 9px;font-weight:700;font-size:14px;margin-bottom:8px;"
+            value="${escapeHtml(r.nombre)}" onchange="actualizarRuta('${r.id}','nombre',this.value)">
+          <div class="ruta-grid">
+            <div>
+              <label>Base (S/)</label>
+              <input type="number" step="0.5" min="0" value="${r.base}" onchange="actualizarRuta('${r.id}','base',parseFloat(this.value)||0)">
+            </div>
+            <div>
+              <label>+ Pasajero</label>
+              <input type="number" step="0.5" min="0" value="${r.extraPasajero}" onchange="actualizarRuta('${r.id}','extraPasajero',parseFloat(this.value)||0)">
+            </div>
+            <div>
+              <label>+ Equipaje</label>
+              <input type="number" step="0.5" min="0" value="${r.equipaje}" onchange="actualizarRuta('${r.id}','equipaje',parseFloat(this.value)||0)">
+            </div>
+          </div>
+          <div class="ruta-actions">
+            <button class="del-btn" onclick="eliminarRuta('${r.id}')">Eliminar ruta</button>
+          </div>
+        </div>
+      `).join('')}
+      <button class="btn-secondary" onclick="agregarRuta()">+ Agregar ruta</button>
+    </div>
+  `;
+}
+
+async function guardarConfig(campo, valor){
+  config[campo] = valor;
+  await STORE.set(STORAGE_PREFIX+'config', config);
+}
+
+async function actualizarRuta(id, campo, valor){
+  const r = rutas.find(x=>x.id===id);
+  if(!r) return;
+  r[campo] = valor;
+  await STORE.set(STORAGE_PREFIX+'rutas', rutas);
+}
+
+async function agregarRuta(){
+  const nueva = {id: uid(), nombre:'Nueva ruta', base:3.00, extraPasajero:1.00, equipaje:1.00};
+  rutas.push(nueva);
+  await STORE.set(STORAGE_PREFIX+'rutas', rutas);
+  render();
+}
+
+async function eliminarRuta(id){
+  rutas = rutas.filter(x=>x.id!==id);
+  if(form.rutaId===id) form.rutaId = rutas[0]?.id || '';
+  await STORE.set(STORAGE_PREFIX+'rutas', rutas);
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
