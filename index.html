@@ -123,6 +123,11 @@ function calcularTarifa(ruta, pasajeros, equipaje){
 function fmt(n){ return 'S/ ' + n.toFixed(2); }
 function escapeHtml(s){ const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML; }
 
+function actualizarBotonWhatsapp(){
+  const btn = document.getElementById('btn-reservar');
+  if(btn) btn.disabled = !form.nombre;
+}
+
 function render(){
   const ruta = RUTAS.find(r=>r.id===form.rutaId);
   const total = calcularTarifa(ruta, form.pasajeros, form.equipaje);
@@ -139,7 +144,7 @@ function render(){
     <div class="card">
       <h2>Tus datos</h2>
       <label for="f-nombre">Nombre completo</label>
-      <input id="f-nombre" type="text" placeholder="Ej. María Torres" value="${escapeHtml(form.nombre)}" oninput="form.nombre=this.value; render();">
+      <input id="f-nombre" type="text" placeholder="Ej. María Torres" value="${escapeHtml(form.nombre)}" oninput="form.nombre=this.value; actualizarBotonWhatsapp();">
       <label for="f-fecha">Fecha y hora del servicio</label>
       <input id="f-fecha" type="datetime-local" value="${form.fecha}" onchange="form.fecha=this.value">
     </div>
@@ -173,7 +178,7 @@ function render(){
       </div>
     </div>
 
-    <button class="btn-whatsapp" ${!form.nombre ? 'disabled' : ''} onclick="enviarReserva()">Reservar por WhatsApp</button>
+    <button id="btn-reservar" class="btn-whatsapp" ${!form.nombre ? 'disabled' : ''} onclick="enviarReserva()">Reservar por WhatsApp</button>
     <small class="hint">Al tocar el botón se abre WhatsApp con tu reserva lista para enviar al conductor.</small>
   `;
 }
