@@ -106,7 +106,7 @@ const RUTAS = [
   {id:'r13', nombre:'Sausal Pueblo — Sector Enrocado Vol.', base:5.00, extraPasajero:1.00, equipaje:1.00},
 ];
 
-let form = { nombre:'', rutaId: RUTAS[0].id, pasajeros:1, equipaje:false, fecha:'' };
+let estado = { nombre:'', rutaId: RUTAS[0].id, pasajeros:1, equipaje:false, fecha:'' };
 
 function nowLocal(){
   const d = new Date();
@@ -125,12 +125,12 @@ function escapeHtml(s){ const d = document.createElement('div'); d.innerText = s
 
 function actualizarBotonWhatsapp(){
   const btn = document.getElementById('btn-reservar');
-  if(btn) btn.disabled = !form.nombre;
+  if(btn) btn.disabled = !estado.nombre;
 }
 
 function render(){
-  const ruta = RUTAS.find(r=>r.id===form.rutaId);
-  const total = calcularTarifa(ruta, form.pasajeros, form.equipaje);
+  const ruta = RUTAS.find(r=>r.id===estado.rutaId);
+  const total = calcularTarifa(ruta, estado.pasajeros, estado.equipaje);
 
   document.getElementById('app').innerHTML = `
     <header class="top">
@@ -144,27 +144,27 @@ function render(){
     <div class="card">
       <h2>Tus datos</h2>
       <label for="f-nombre">Nombre completo</label>
-      <input id="f-nombre" type="text" placeholder="Ej. María Torres" value="${escapeHtml(form.nombre)}" oninput="form.nombre=this.value; actualizarBotonWhatsapp();">
+      <input id="f-nombre" type="text" placeholder="Ej. María Torres" value="${escapeHtml(estado.nombre)}" oninput="estado.nombre=this.value; actualizarBotonWhatsapp();">
       <label for="f-fecha">Fecha y hora del servicio</label>
-      <input id="f-fecha" type="datetime-local" value="${form.fecha}" onchange="form.fecha=this.value">
+      <input id="f-fecha" type="datetime-local" value="${estado.fecha}" onchange="estado.fecha=this.value">
     </div>
 
     <div class="card">
       <h2>Detalles del viaje</h2>
       <label for="f-ruta">Ruta</label>
-      <select id="f-ruta" onchange="form.rutaId=this.value; render();">
-        ${RUTAS.map(r=>`<option value="${r.id}" ${r.id===form.rutaId?'selected':''}>${escapeHtml(r.nombre)}</option>`).join('')}
+      <select id="f-ruta" onchange="estado.rutaId=this.value; render();">
+        ${RUTAS.map(r=>`<option value="${r.id}" ${r.id===estado.rutaId?'selected':''}>${escapeHtml(r.nombre)}</option>`).join('')}
       </select>
       <label>Número de pasajeros</label>
       <div class="stepper">
-        <button onclick="form.pasajeros=Math.max(1,form.pasajeros-1); render();" ${form.pasajeros<=1?'disabled':''}>−</button>
-        <span>${form.pasajeros}</span>
-        <button onclick="form.pasajeros=Math.min(${CAPACIDAD_MAX},form.pasajeros+1); render();" ${form.pasajeros>=CAPACIDAD_MAX?'disabled':''}>+</button>
+        <button onclick="estado.pasajeros=Math.max(1,estado.pasajeros-1); render();" ${estado.pasajeros<=1?'disabled':''}>−</button>
+        <span>${estado.pasajeros}</span>
+        <button onclick="estado.pasajeros=Math.min(${CAPACIDAD_MAX},estado.pasajeros+1); render();" ${estado.pasajeros>=CAPACIDAD_MAX?'disabled':''}>+</button>
       </div>
       <label>Equipaje</label>
       <div class="toggle-group">
-        <button class="${!form.equipaje?'sel':''}" onclick="form.equipaje=false; render();">Sin equipaje</button>
-        <button class="${form.equipaje?'sel':''}" onclick="form.equipaje=true; render();">Con equipaje (máx. 50 kg)</button>
+        <button class="${!estado.equipaje?'sel':''}" onclick="estado.equipaje=false; render();">Sin equipaje</button>
+        <button class="${estado.equipaje?'sel':''}" onclick="estado.equipaje=true; render();">Con equipaje (máx. 50 kg)</button>
       </div>
     </div>
 
@@ -172,32 +172,32 @@ function render(){
       <div class="ticket-head"><span class="t1">Resumen de tu reserva</span></div>
       <div class="ticket-body">
         <div class="ticket-line"><span>Ruta</span><span>${escapeHtml(ruta.nombre)}</span></div>
-        <div class="ticket-line"><span>Pasajeros</span><span>${form.pasajeros}</span></div>
-        <div class="ticket-line"><span>Equipaje</span><span>${form.equipaje ? fmt(ruta.equipaje) : 'No'}</span></div>
+        <div class="ticket-line"><span>Pasajeros</span><span>${estado.pasajeros}</span></div>
+        <div class="ticket-line"><span>Equipaje</span><span>${estado.equipaje ? fmt(ruta.equipaje) : 'No'}</span></div>
         <div class="ticket-total"><span class="lbl">Total a pagar</span><span class="amt">${fmt(total)}</span></div>
       </div>
     </div>
 
-    <button id="btn-reservar" class="btn-whatsapp" ${!form.nombre ? 'disabled' : ''} onclick="enviarReserva()">Reservar por WhatsApp</button>
+    <button id="btn-reservar" class="btn-whatsapp" ${!estado.nombre ? 'disabled' : ''} onclick="enviarReserva()">Reservar por WhatsApp</button>
     <small class="hint">Al tocar el botón se abre WhatsApp con tu reserva lista para enviar al conductor.</small>
   `;
 }
 
 function enviarReserva(){
-  const ruta = RUTAS.find(r=>r.id===form.rutaId);
-  const total = calcularTarifa(ruta, form.pasajeros, form.equipaje);
-  const fechaTxt = form.fecha ? new Date(form.fecha).toLocaleString('es-PE') : 'Lo antes posible';
+  const ruta = RUTAS.find(r=>r.id===estado.rutaId);
+  const total = calcularTarifa(ruta, estado.pasajeros, estado.equipaje);
+  const fechaTxt = estado.fecha ? new Date(estado.fecha).toLocaleString('es-PE') : 'Lo antes posible';
   const msg = `Hola, quiero reservar un mototaxi:%0A` +
-    `🙋 Nombre: ${encodeURIComponent(form.nombre)}%0A` +
+    `🙋 Nombre: ${encodeURIComponent(estado.nombre)}%0A` +
     `📍 Ruta: ${encodeURIComponent(ruta.nombre)}%0A` +
-    `👥 Pasajeros: ${form.pasajeros}%0A` +
-    `🧳 Equipaje: ${form.equipaje ? 'Sí' : 'No'}%0A` +
+    `👥 Pasajeros: ${estado.pasajeros}%0A` +
+    `🧳 Equipaje: ${estado.equipaje ? 'Sí' : 'No'}%0A` +
     `📅 Fecha y hora: ${encodeURIComponent(fechaTxt)}%0A` +
     `💰 Total estimado: ${encodeURIComponent(fmt(total))}`;
   window.open(`https://wa.me/${TELEFONO_CONDUCTOR}?text=${msg}`, '_blank');
 }
 
-form.fecha = nowLocal();
+estado.fecha = nowLocal();
 render();
 </script>
 </body>
