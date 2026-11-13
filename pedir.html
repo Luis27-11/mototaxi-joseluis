@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jose Luis Mototaxi – Pide tu moto</title>
+<title>Moto Ya Sausal – Pide tu moto</title>
 <style>
 :root{--bg:#faf7fa;--card:#fff;--tx:#241828;--mu:#6e6272;--pr:#c2187a;--go:#d4a017;--si:#e4e0e6;--ok:#1f8a4c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#18101c;--card:#241a29;--tx:#f4eef6;--mu:#a99bb0;--si:#3a2d40;color-scheme:dark}}
@@ -36,7 +36,7 @@ button:disabled{opacity:.5}
 </head>
 <body>
 <div class="wrap">
-<header><h1>🛵 Jose Luis Mototaxi</h1><p>Sausal y Alto Perú · Pide tu moto en 3 toques</p></header>
+<header><h1>🛵 Moto Ya Sausal</h1><p>Sausal, Alto Perú y Alrededores · Pide tu moto en 3 toques</p></header>
 
 <section id="s1" class="card">
 <label>¿Dónde te recojo?</label>
@@ -141,7 +141,7 @@ $("req").onclick=()=>{
     date:new Date().toLocaleString("es-PE",{dateStyle:"short",timeStyle:"short"})};
   $("s1").classList.add("hide");$("fareBox").classList.add("hide");$("s2").classList.remove("hide");
   $("wa").classList.add("hide");$("stTitle").textContent="Buscando conductor…";
-  $("stTxt").textContent="Conectando con Jose Luis Mototaxi";
+  $("stTxt").textContent="Conectando con Moto Ya Sausal";
   timer=setTimeout(()=>{
     $("stTitle").innerHTML='<span class="badge">Conductor disponible</span>';
     $("stTxt").textContent=trip.drv.n+" está listo. Confirma tu pedido por WhatsApp.";
@@ -151,7 +151,7 @@ $("req").onclick=()=>{
 
 $("wa").onclick=()=>{
   const t=trip;
-  const msg=`🛵 *Pedido de mototaxi*\nNombre: ${t.name}\nRecojo: ${t.from}${gpsLink?"\nUbicación: "+gpsLink:""}\nDestino: ${t.to}\nPasajeros: ${t.pax}${t.ref?"\nReferencia: "+t.ref:""}\nTarifa estimada: S/ ${t.price.toFixed(2)}\nConductor: ${t.drv.n}`;
+  const msg=`🛵 *Pedido Moto Ya Sausal*\nNombre: ${t.name}\nRecojo: ${t.from}${gpsLink?"\nUbicación: "+gpsLink:""}\nDestino: ${t.to}\nPasajeros: ${t.pax}${t.ref?"\nReferencia: "+t.ref:""}\nTarifa estimada: S/ ${t.price.toFixed(2)}\nConductor: ${t.drv.n}`;
   window.open(`https://wa.me/${t.drv.tel}?text=${encodeURIComponent(msg)}`,"_blank");
   save(t);reset();
 };
@@ -159,12 +159,12 @@ $("cancel").onclick=reset;
 function reset(){clearTimeout(timer);$("s2").classList.add("hide");$("s1").classList.remove("hide");calc();}
 
 $("call").onclick=()=>{const v=$("drv").value;location.href="tel:+"+(v==="any"?CONDUCTORES[0]:CONDUCTORES[+v]).tel};
-$("share").onclick=()=>{const u=location.href.split("#")[0],t="🛵 Pide tu mototaxi en Sausal y Alto Perú desde el celular:";
-  if(navigator.share){navigator.share({title:"Jose Luis Mototaxi",text:t,url:u}).catch(()=>{})}
+$("share").onclick=()=>{const u=location.href.split("#")[0],t="🛵 Moto Ya Sausal: pide tu mototaxi en Sausal y Alto Perú desde el celular:";
+  if(navigator.share){navigator.share({title:"Moto Ya Sausal",text:t,url:u}).catch(()=>{})}
   else window.open("https://wa.me/?text="+encodeURIComponent(t+" "+u),"_blank")};
-function save(t){try{const h=JSON.parse(localStorage.getItem("jlm_h")||"[]");h.unshift({date:t.date,from:t.from,to:t.to,price:t.price});localStorage.setItem("jlm_h",JSON.stringify(h.slice(0,5)));}catch(e){}show();}
+function save(t){try{const h=JSON.parse(localStorage.getItem("myas_h")||"[]");h.unshift({date:t.date,from:t.from,to:t.to,price:t.price});localStorage.setItem("myas_h",JSON.stringify(h.slice(0,5)));}catch(e){}show();}
 function show(){
-  let h=[];try{h=JSON.parse(localStorage.getItem("jlm_h")||"[]")}catch(e){}
+  let h=[];try{h=JSON.parse(localStorage.getItem("myas_h")||"[]")}catch(e){}
   if(!h.length)return;
   $("hist").innerHTML=h.map(t=>`<div class="trip">${t.date} · ${t.from} → ${t.to} · <b>S/ ${Number(t.price).toFixed(2)}</b></div>`).join("");
 }
