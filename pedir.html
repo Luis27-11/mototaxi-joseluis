@@ -42,12 +42,15 @@ button:disabled{opacity:.5}
 <label>¿Dónde te recojo?</label>
 <select id="from"></select>
 <button class="gps" id="gps" type="button">📍 Usar mi ubicación actual</button>
+<div id="mapBox" class="hide"><iframe id="map" title="Mapa de tu ubicación" loading="lazy" style="width:100%;height:220px;border:0;border-radius:10px;margin-top:6px"></iframe><small style="color:var(--mu)">Este es tu punto de recojo. Si no es correcto, vuelve a tocar el botón.</small></div>
 <label>¿A dónde vas?</label>
 <select id="to"></select>
 <div class="row">
 <div><label>Pasajeros</label><select id="pax"><option>1</option><option>2</option><option>3</option></select></div>
 <div><label>Nombre</label><input id="name" placeholder="Tu nombre" autocomplete="name"></div>
 </div>
+<label>Conductor</label>
+<select id="drv"></select>
 <label>Referencia (opcional)</label>
 <input id="ref" placeholder="Ej: casa azul, frente a la bodega">
 </section>
@@ -67,6 +70,8 @@ button:disabled{opacity:.5}
 <button id="cancel" class="sec">Cancelar</button>
 </section>
 
+<section class="card"><div class="row"><button class="sec" id="call">📞 Llamar</button><button class="sec" id="share">📤 Compartir app</button></div></section>
+
 <section class="card">
 <b style="font-size:14px">Tus últimos viajes</b>
 <div id="hist"><div class="trip">Aún no tienes viajes.</div></div>
@@ -76,9 +81,15 @@ button:disabled{opacity:.5}
 
 <script>
 // ====== CONFIGURA AQUÍ ======
-const WHATSAPP = "51952328431"; // número del conductor con código de país
+const CONDUCTORES = [            // agrega una línea por cada conductor (teléfono con 51)
+  {n:"José Luis", tel:"51999999999"},
+  {n:"Conductor 2", tel:"51988888888"}
+];
 const BASE = 3;                  // tarifa mínima (S/)
 const POR_ZONA = 1.5;            // S/ por cada zona de distancia
+const EXTRA_PAX = 1;             // S/ por cada pasajero adicional
+const NOCHE_EXTRA = 1;           // S/ extra en horario nocturno
+const NOCHE_DESDE = 21, NOCHE_HASTA = 5; // de 9 pm a 5 am
 const LUGARES = [                // zona = qué tan lejos está (0 = centro)
   {n:"Plaza de Armas – Sausal", z:0},
   {n:"Mercado", z:0},
@@ -93,18 +104,22 @@ const LUGARES = [                // zona = qué tan lejos está (0 = centro)
 const $=id=>document.getElementById(id);
 let gpsLink="", trip=null, timer=null;
 const opts=LUGARES.map((l,i)=>`<option value="${i}">${l.n}</option>`).join("");
+$("drv").innerHTML='<option value="any">Cualquiera disponible</option>'+CONDUCTORES.map((c,i)=>`<option value="${i}">${c.n}</option>`).join("");
 $("from").innerHTML=opts; $("to").innerHTML=opts; $("to").value=2;
 
+function esNoche(){const h=new Date().getHours();return h>=NOCHE_DESDE||h<NOCHE_HASTA}
 function calc(){
   const a=LUGARES[$("from").value], b=LUGARES[$("to").value];
-  const d=Math.abs(a.z-b.z);
-  const p=Math.round((BASE+d*POR_ZONA)*2)/2;
+  const d=Math.abs(a.z-b.z), px=+$("pax").value, n=esNoche();
+  let p=BASE+d*POR_ZONA+(px-1)*EXTRA_PAX+(n?NOCHE_EXTRA:0);
+  p=Math.round(p*2)/2;
   $("price").textContent="S/ "+p.toFixed(2);
-  $("detail").textContent=(d?d+" zona(s) de distancia":"Viaje corto")+" · "+$("pax").value+" pasajero(s)";
+  $("detail").textContent=(d?d+" zona(s)":"Viaje corto")+" · "+px+" pasajero(s)"+(n?" · 🌙 tarifa nocturna":"");
   $("fareBox").classList.toggle("hide",$("from").value===$("to").value&&!gpsLink);
   return p;
 }
-["from","to","pax"].forEach(i=>$(i).addEventListener("change",calc));
+function driver(){const v=$("drv").value;return v==="any"?CONDUCTORES[Math.floor(Math.random()*CONDUCTORES.length)]:CONDUCTORES[+v]}
+["from","to","pax","drv"].forEach(i=>$(i).addEventListener("change",calc));
 calc();
 
 $("gps").onclick=()=>{
@@ -113,12 +128,15 @@ $("gps").onclick=()=>{
   navigator.geolocation.getCurrentPosition(p=>{
     gpsLink=`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`;
     $("gps").textContent="✅ Ubicación lista (se enviará al conductor)";calc();
+    const la=p.coords.latitude,lo=p.coords.longitude,d=0.004;
+    $("map").src=`https://www.openstreetmap.org/export/embed.html?bbox=${lo-d},${la-d},${lo+d},${la+d}&layer=mapnik&marker=${la},${lo}`;
+    $("mapBox").classList.remove("hide");
   },()=>{$("gps").textContent="📍 No se pudo obtener. Elige tu punto en la lista."},{timeout:8000});
 };
 
 $("req").onclick=()=>{
   const price=calc();
-  trip={from:LUGARES[$("from").value].n,to:LUGARES[$("to").value].n,price,
+  trip={drv:driver(),from:LUGARES[$("from").value].n,to:LUGARES[$("to").value].n,price,
     pax:$("pax").value,name:$("name").value.trim()||"Cliente",ref:$("ref").value.trim(),
     date:new Date().toLocaleString("es-PE",{dateStyle:"short",timeStyle:"short"})};
   $("s1").classList.add("hide");$("fareBox").classList.add("hide");$("s2").classList.remove("hide");
@@ -126,21 +144,25 @@ $("req").onclick=()=>{
   $("stTxt").textContent="Conectando con Jose Luis Mototaxi";
   timer=setTimeout(()=>{
     $("stTitle").innerHTML='<span class="badge">Conductor disponible</span>';
-    $("stTxt").textContent="Confirma tu pedido por WhatsApp para que salga a recogerte.";
+    $("stTxt").textContent=trip.drv.n+" está listo. Confirma tu pedido por WhatsApp.";
     $("wa").classList.remove("hide");
   },2200);
 };
 
 $("wa").onclick=()=>{
   const t=trip;
-  const msg=`🛵 *Pedido de mototaxi*\nNombre: ${t.name}\nRecojo: ${t.from}${gpsLink?"\nUbicación: "+gpsLink:""}\nDestino: ${t.to}\nPasajeros: ${t.pax}${t.ref?"\nReferencia: "+t.ref:""}\nTarifa estimada: S/ ${t.price.toFixed(2)}`;
-  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`,"_blank");
+  const msg=`🛵 *Pedido de mototaxi*\nNombre: ${t.name}\nRecojo: ${t.from}${gpsLink?"\nUbicación: "+gpsLink:""}\nDestino: ${t.to}\nPasajeros: ${t.pax}${t.ref?"\nReferencia: "+t.ref:""}\nTarifa estimada: S/ ${t.price.toFixed(2)}\nConductor: ${t.drv.n}`;
+  window.open(`https://wa.me/${t.drv.tel}?text=${encodeURIComponent(msg)}`,"_blank");
   save(t);reset();
 };
 $("cancel").onclick=reset;
 function reset(){clearTimeout(timer);$("s2").classList.add("hide");$("s1").classList.remove("hide");calc();}
 
-function save(t){try{const h=JSON.parse(localStorage.getItem("jlm_h")||"[]");h.unshift(t);localStorage.setItem("jlm_h",JSON.stringify(h.slice(0,5)));}catch(e){}show();}
+$("call").onclick=()=>{const v=$("drv").value;location.href="tel:+"+(v==="any"?CONDUCTORES[0]:CONDUCTORES[+v]).tel};
+$("share").onclick=()=>{const u=location.href.split("#")[0],t="🛵 Pide tu mototaxi en Sausal y Alto Perú desde el celular:";
+  if(navigator.share){navigator.share({title:"Jose Luis Mototaxi",text:t,url:u}).catch(()=>{})}
+  else window.open("https://wa.me/?text="+encodeURIComponent(t+" "+u),"_blank")};
+function save(t){try{const h=JSON.parse(localStorage.getItem("jlm_h")||"[]");h.unshift({date:t.date,from:t.from,to:t.to,price:t.price});localStorage.setItem("jlm_h",JSON.stringify(h.slice(0,5)));}catch(e){}show();}
 function show(){
   let h=[];try{h=JSON.parse(localStorage.getItem("jlm_h")||"[]")}catch(e){}
   if(!h.length)return;
