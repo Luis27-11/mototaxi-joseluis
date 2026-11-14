@@ -36,7 +36,7 @@ button:disabled{opacity:.5}
 </head>
 <body>
 <div class="wrap">
-<header><h1>🛵 Moto Ya Sausal</h1><p>Sausal, Alto Perú y Alrededores · Pide tu moto en 3 toques</p></header>
+<header><h1>🛵 Moto Ya Sausal</h1><p>Sausal, Alto Peru y Alrededores · Pide tu moto en 3 toques</p></header>
 
 <section id="s1" class="card">
 <label>¿Dónde te recojo?</label>
@@ -49,6 +49,7 @@ button:disabled{opacity:.5}
 <div><label>Pasajeros</label><select id="pax"><option>1</option><option>2</option><option>3</option></select></div>
 <div><label>Nombre</label><input id="name" placeholder="Tu nombre" autocomplete="name"></div>
 </div>
+<label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:14px;color:var(--tx)"><input type="checkbox" id="lug" style="width:20px;height:20px"> Llevo equipaje de 50 kg o más (cuenta como 1 pasajero adicional)</label>
 <label>Conductor</label>
 <select id="drv"></select>
 <label>Referencia (opcional)</label>
@@ -56,7 +57,7 @@ button:disabled{opacity:.5}
 </section>
 
 <section id="fareBox" class="card fare hide">
-<small>Tarifa estimada</small><b id="price">S/ 0</b>
+<small>Tarifa de tu ruta</small><b id="price">S/ 0</b>
 <small id="detail"></small>
 <div style="margin-top:12px"><button id="req">Pedir mototaxi</button></div>
 </section>
@@ -76,7 +77,7 @@ button:disabled{opacity:.5}
 <b style="font-size:14px">Tus últimos viajes</b>
 <div id="hist"><div class="trip">Aún no tienes viajes.</div></div>
 </section>
-<p class="c" style="font-size:12px;color:var(--mu)">🎁 6 sellos = 7° viaje gratis · Tarifas referenciales</p>
+<p class="c" style="font-size:12px;color:var(--mu)">🎁 6 sellos = 7° viaje gratis · Tarifas fijas por ruta</p>
 </div>
 
 <script>
@@ -85,41 +86,52 @@ const CONDUCTORES = [            // agrega una línea por cada conductor (teléf
   {n:"Luis Chuso", tel:"51952328431"},
   {n:"Darwin Mayta", tel:"51938763822"}
 ];
-const BASE = 3;                  // tarifa mínima (S/)
-const POR_ZONA = 1.5;            // S/ por cada zona de distancia
-const EXTRA_PAX = 1;             // S/ por cada pasajero adicional
-const NOCHE_EXTRA = 1;           // S/ extra en horario nocturno
-const NOCHE_DESDE = 21, NOCHE_HASTA = 5; // de 9 pm a 5 am
-const LUGARES = [                // zona = qué tan lejos está (0 = centro)
-  {n:"Plaza de Armas – Sausal", z:0},
-  {n:"Mercado", z:0},
-  {n:"Posta / Centro de salud", z:1},
-  {n:"Colegio", z:1},
-  {n:"Campo deportivo", z:2},
-  {n:"Carretera principal", z:2},
-  {n:"Alto Perú – Entrada", z:3},
-  {n:"Alto Perú – Interior", z:4}
+// Cada ruta: [lugar A, lugar B, pasaje único S/, pasajero adicional S/]  (vale en ambos sentidos)
+const RUTAS = [
+  // RUTAS INTERNAS
+  ["Sausal Pueblo","Sector El Tráfico",2,0.5],
+  ["Sausal Pueblo","Alto Perú",2,0.5],
+  ["Sausal Pueblo","Sector Vivero",2,0.5],
+  ["Sausal Pueblo","Sector Tiro Blanco",2,0.5],
+  ["Sausal Pueblo","Sector El Estadio",2,0.5],
+  ["Sector El Tráfico","Sector Vivero",3,1],
+  ["Sector El Tráfico","Sector Tiro Blanco",3,1],
+  ["Sector El Tráfico","Alto Perú",3,1],
+  // RUTAS EXTERNAS
+  ["Sausal Pueblo","Quemazón",5,1],
+  ["Sausal Pueblo","Puente Tabla",7,1],
+  ["Sausal Pueblo","Piedra Molino",9,1],
+  ["Sausal Pueblo","La Mónica 1",6,1],
+  ["Sausal Pueblo","La Mónica 2",7,1],
+  ["Sausal Pueblo","Granja 1 La Mónica",10,2],
+  ["Sausal Pueblo","Granja 2 La Mónica",15,2],
+  ["Sausal Pueblo","Sector Voladero",5,1],
+  ["Sausal Pueblo","Sector Microalgas",4,1],
+  ["Sausal Pueblo","Sector El Mango Enrocado",6,1]
 ];
+// Equipaje de 50 kg o más = 1 pasajero adicional
 // =============================
 const $=id=>document.getElementById(id);
 let gpsLink="", trip=null, timer=null;
-const opts=LUGARES.map((l,i)=>`<option value="${i}">${l.n}</option>`).join("");
+const LUGARES=[...new Set(RUTAS.flatMap(r=>[r[0],r[1]]))];
+const opts=LUGARES.map(n=>`<option value="${n}">${n}</option>`).join("");
+const money=v=>"S/ "+Number(v).toFixed(2);
 $("drv").innerHTML='<option value="any">Cualquiera disponible</option>'+CONDUCTORES.map((c,i)=>`<option value="${i}">${c.n}</option>`).join("");
-$("from").innerHTML=opts; $("to").innerHTML=opts; $("to").value=2;
+$("from").innerHTML=opts; $("to").innerHTML=opts; $("from").value="Sausal Pueblo"; $("to").value="Sector El Tráfico";
 
-function esNoche(){const h=new Date().getHours();return h>=NOCHE_DESDE||h<NOCHE_HASTA}
+function ruta(a,b){return RUTAS.find(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a))}
 function calc(){
-  const a=LUGARES[$("from").value], b=LUGARES[$("to").value];
-  const d=Math.abs(a.z-b.z), px=+$("pax").value, n=esNoche();
-  let p=BASE+d*POR_ZONA+(px-1)*EXTRA_PAX+(n?NOCHE_EXTRA:0);
-  p=Math.round(p*2)/2;
-  $("price").textContent="S/ "+p.toFixed(2);
-  $("detail").textContent=(d?d+" zona(s)":"Viaje corto")+" · "+px+" pasajero(s)"+(n?" · 🌙 tarifa nocturna":"");
-  $("fareBox").classList.toggle("hide",$("from").value===$("to").value&&!gpsLink);
+  const a=$("from").value,b=$("to").value,px=+$("pax").value,eq=$("lug").checked,r=ruta(a,b);
+  const adic=(px-1)+(eq?1:0);
+  $("fareBox").classList.toggle("hide",a===b);
+  if(!r){$("price").textContent="Por confirmar";$("detail").textContent="Esta ruta no tiene tarifa fija. El conductor te confirmará el precio.";return null}
+  const p=r[2]+adic*r[3];
+  $("price").textContent=money(p);
+  $("detail").textContent="Pasaje único "+money(r[2])+(adic?" + "+adic+" adicional(es) × "+money(r[3]):"");
   return p;
 }
 function driver(){const v=$("drv").value;return v==="any"?CONDUCTORES[Math.floor(Math.random()*CONDUCTORES.length)]:CONDUCTORES[+v]}
-["from","to","pax","drv"].forEach(i=>$(i).addEventListener("change",calc));
+["from","to","pax","drv","lug"].forEach(i=>$(i).addEventListener("change",calc));
 calc();
 
 $("gps").onclick=()=>{
@@ -136,7 +148,7 @@ $("gps").onclick=()=>{
 
 $("req").onclick=()=>{
   const price=calc();
-  trip={drv:driver(),from:LUGARES[$("from").value].n,to:LUGARES[$("to").value].n,price,
+  trip={drv:driver(),from:$("from").value,to:$("to").value,price,eq:$("lug").checked,
     pax:$("pax").value,name:$("name").value.trim()||"Cliente",ref:$("ref").value.trim(),
     date:new Date().toLocaleString("es-PE",{dateStyle:"short",timeStyle:"short"})};
   $("s1").classList.add("hide");$("fareBox").classList.add("hide");$("s2").classList.remove("hide");
@@ -151,7 +163,7 @@ $("req").onclick=()=>{
 
 $("wa").onclick=()=>{
   const t=trip;
-  const msg=`🛵 *Pedido Moto Ya Sausal*\nNombre: ${t.name}\nRecojo: ${t.from}${gpsLink?"\nUbicación: "+gpsLink:""}\nDestino: ${t.to}\nPasajeros: ${t.pax}${t.ref?"\nReferencia: "+t.ref:""}\nTarifa estimada: S/ ${t.price.toFixed(2)}\nConductor: ${t.drv.n}`;
+  const msg=`🛵 *Pedido Moto Ya Sausal*\nNombre: ${t.name}\nRecojo: ${t.from}${gpsLink?"\nUbicación: "+gpsLink:""}\nDestino: ${t.to}\nPasajeros: ${t.pax}${t.eq?"\nEquipaje: 50 kg o más":""}${t.ref?"\nReferencia: "+t.ref:""}\nTarifa: ${t.price==null?"por confirmar":money(t.price)}\nConductor: ${t.drv.n}`;
   window.open(`https://wa.me/${t.drv.tel}?text=${encodeURIComponent(msg)}`,"_blank");
   save(t);reset();
 };
@@ -166,7 +178,7 @@ function save(t){try{const h=JSON.parse(localStorage.getItem("myas_h")||"[]");h.
 function show(){
   let h=[];try{h=JSON.parse(localStorage.getItem("myas_h")||"[]")}catch(e){}
   if(!h.length)return;
-  $("hist").innerHTML=h.map(t=>`<div class="trip">${t.date} · ${t.from} → ${t.to} · <b>S/ ${Number(t.price).toFixed(2)}</b></div>`).join("");
+  $("hist").innerHTML=h.map(t=>`<div class="trip">${t.date} · ${t.from} → ${t.to} · <b>${t.price==null?"por confirmar":money(t.price)}</b></div>`).join("");
 }
 show();
 </script>
